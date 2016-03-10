@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Realmの基本の基本</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #EEEEEE; }
+      .inverse {
+        background: #212121;
+        color: #F5F5F5;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+name: inverse
+layout: true
+class: inverse
+---
+class: center, middle
+
+# Realmの基本の基本
+---
+
+#### サンプルも作成しているので、こちらも参考にしてください。
+
+#### ※こっちのほうが詳しく書いています（笑）
+
+- Android
+
+> https://github.com/gupuru/RealmSample-Android
+
+- iOS
+
+> https://github.com/gupuru/RealmSample-iOS
+
+---
+# Realmって、何？
+
+1. NoSQLのデータベース。
+2. モバイル向けに作られている。
+3. 使いやすい！
+4. 速い!(時と場合による...)
+5. iOS(swift, obj-c), Android(java), Javascript(React Naitive)に対応
+6. 導入が簡単!
+
+---
+
+# 導入方法
+
+- Android
+
+```java
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'io.realm:realm-android:<version>'
+}
+```
+
+- iOS
+
+```ruby
+use_frameworks!
+
+pod 'RealmSwift'
+```
+
+---
+
+# モデル
+
+SQLでいうとTableのようなもの。
+
+- Android
+
+```java
+public class Pokemon extends RealmObject {
+
+    @PrimaryKey
+    private String name;
+    private float height;
+    private float weight;
+    private String type;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+         this.name = name;
+    }
+
+    //以下省略
+```
+
+---
+
+- iOS
+
+```swift
+import RealmSwift
+
+// Pokemon model
+class Pokemon: Object {
+
+    dynamic var name: String = ""
+    dynamic var height: Float = 0.0
+    dynamic var weight: Float = 0.0
+    dynamic var type: String = ""
+
+    override static func primaryKey() -> String? {
+        return "name"
+    }
+
+}
+```
+
+---
+
+### もう少しモデルについて...
+
+- androidの場合は、getterとsetter以外、書いてはダメ。
+
+- iOSの場合も決められた物以外書いてはだめ。
+
+> ※この辺りは、将来的には、書けるようにするらしい...
+
+- 型
+
+```java
+//Android
+boolean, byte, short, ìnt, long, float, double, String, Date, byte[]
+//iOS
+Bool、Int8、Int16、Int32、Int64、Double、Float、String、NSData
+```
+
+---
+
+### プロパティ, アノテーション
+
+- アノテーション(Android)
+```java
+@PrimaryKey, @Required, @Ignore, @Index
+```
+
+---
+
+### プロパティ, アノテーション
+
+- プロパティ(iOS)
+
+インデックス
+```swift
+override static func indexedProperties() -> [String] {
+  return ["name"]
+}
+```
+
+プライマリキー
+
+```swift
+override static func primaryKey() -> String? {
+  return "name"
+}
+```
+
+保存しない
+```swift
+override static func ignoredProperties() -> [String] {
+  return ["name"]
+}
+```
+
+---
+
+# 書き込み
+
+- Android
+
+```java
+
+Realm realm = Realm.getInstance(this);
+
+realm.beginTransaction();
+Pokemon pokemon = realm.createObject(Pokemon.class);
+pokemon.setName("ピカチュウ");
+realm.commitTransaction();
+
+realm.close();
+
+```
+
+---
+
+- iOS
+
+```swfit
+let pokemon = Pokemon()
+pokemon.name = "ピカチュウ"
+pokemon.height = 0.4
+pokemon.type = "でんき"
+pokemon.weight = 6.0
+
+let realm = try! Realm()
+
+try! realm.write({ () -> Void in
+  realm.add(pokemon)
+})
+```
+
+---
+
+### 書き込みをもう少し...
+
+- androidは必ず最後にcloseすること。
+
+```java
+realm.close();
+
+```
+
+- 他にもトランザクションを使った方法や非同期書き込みもできます。
+
+- 「Realm Browser」を使うとGUIで、データを表示できます。
+
+---
+
+# クエリ
+
+- Android
+
+```java
+RealmQuery<Pokemon> query = realm.where(Pokemon.class);
+
+RealmResults<Pokemon> pokemons = query.findAll();
+```
+
+- iOS
+
+```swift
+let pokemon = realm.objects(Pokemon).filter("name = 'ピカチュウ'").first
+```
+
+---
+
+### クエリをもう少し...
+
+- androidの検索条件は、これくらいあります。(もっとあるけど、ここでは割愛...)
+
+```java
+between, greaterThan(), lessThan(), greaterThanOrEqualTo(), lessThanOrEqualTo()
+equalTo(), notEqualTo()
+contains(), beginsWith(), endsWith()
+```
+
+- iOSの検索条件は、これくらいあります。(もっとあるけど、ここでは割愛...)
+
+```swift
+//比較演算子
+==、<=、<、>=、>、!=
+
+//論理演算子
+“AND”、“OR”、“NOT”
+
+//いずれかの条件と一致するかどうか
+IN
+
+//集計関数
+@count、@min、@max、@sum、@avg
+```
+
+---
+
+# Update
+
+- Android
+
+```java
+Pokemon pokemon = realm.where(Pokemon.class).findFirst();
+
+realm.beginTransaction();
+pokemon.setName("ぴかちゅう");
+realm.commitTransaction();
+
+realm.close();
+```
+
+- iOS
+
+```swift
+let pokemon = realm.objects(Pokemon).filter("name = 'ピカチュウ'").first
+try! realm.write {
+  pokemon?.weight = 10.0
+}
+```
+
+---
+
+# 削除
+
+```java
+Pokemon pokemon = realm.where(Pokemon.class).findFirst();
+
+ realm.beginTransaction();
+ pokemon.removeFromRealm();
+ realm.commitTransaction();
+
+ realm.close();
+```
+
+- iOS
+
+```swift
+let pokemon = realm.objects(Pokemon).filter("name = 'ピカチュウ'").first
+try! realm.write {
+  realm.delete(pokemon!)
+}
+```
+
+---
+
+### 通知(Android)
+
+```java
+public class MainActivity extends AppCompatActivity {
+
+    private Realm realm;
+    private RealmChangeListener realmListener;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        realmListener = new RealmChangeListener() {
+            @Override
+            public void onChange() {
+                Log.d("MainActivity", "変更された");
+            }};
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // リスナーを削除します
+        realm.removeChangeListener(realmListener);
+        // Realmインスタンスを閉じます
+        realm.close();
+    }
+```
+
+---
+
+### 通知(iOS)
+
+```swift
+let token = realm.objects(Pokemon).addNotificationBlock { results, error in
+        print("変更")
+}
+
+token!.stop()
+```
+
+---
+
+### マイグレーション(Android)　その1
+
+- RealmMigrationにマイグレーション処理を書きます。
+
+```java
+public class Migration implements RealmMigration {
+
+    @Override
+    public void migrate(final DynamicRealm realm, long oldVersion, long newVersion) {
+
+        RealmSchema schema = realm.getSchema();
+
+        if (oldVersion == 0) {
+            RealmObjectSchema personSchema = schema.get("Pokemon");
+
+            personSchema
+                    .addField("classification", String.class);
+
+            oldVersion++;
+        }
+
+    }
+}
+```
+---
+
+### マイグレーション(Android)　その2
+
+- RealmConfigurationのmigrationのところにRealmMigrationを指定
+
+```java
+RealmConfiguration config = new RealmConfiguration.Builder(MainActivity.this)
+                .schemaVersion(1)
+                .migration(new Migration())
+                .build();
+```
+
+---
+
+### マイグレーション(iOS)
+
+```swift
+let config = Realm.Configuration(
+
+  schemaVersion: 1,
+
+  migrationBlock: { migration, oldSchemaVersion in
+    // 最初のマイグレーションの場合、`oldSchemaVersion`は0
+    if (oldSchemaVersion < 1) {
+
+    }
+  })
+
+// デフォルトRealmに新しい設定を適用
+Realm.Configuration.defaultConfiguration = config
+
+// 自動的にマイグレーションが実行
+let realm = try! Realm()
+```
+
+---
+
+# サポート
+
+- Facebookグループ
+
+> https://www.facebook.com/groups/realmjp/?ref=bookmarks
+
+- slack
+
+> http://slack.realm.io/
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
