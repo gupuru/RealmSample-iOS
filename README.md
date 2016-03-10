@@ -180,7 +180,7 @@ let token = realm.objects(Pokemon).addNotificationBlock { results, error in
 
 token!.stop()
 ```
-必要なくなっtら、stop()を呼ぶ
+必要なくなったら、stop()を呼ぶ
 
 ## マイグレーション
 
